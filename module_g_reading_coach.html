@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Module G Reading Coach</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter (English) & Heebo (Hebrew) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Heebo', 'sans-serif'],
+            hebrew: ['Heebo', 'sans-serif'],
+            english: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            cream: '#FAF9F6',
+            softBlue: '#E8F1FA',
+            accentBlue: '#3B82F6',
+            softMint: '#E6F6F0',
+            accentMint: '#10B981',
+            softAmber: '#FEF5E6',
+            accentAmber: '#F59E0B',
+            softRose: '#FDECEC',
+            accentRose: '#EF4444',
+            slateInk: '#1E293B',
+            slateMuted: '#64748B',
+            cardBorder: '#E2E8F0',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Base setup for smooth mobile experience without horizontal scroll */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #F1F5F9;
+      color: #1E293B;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      font-family: 'Inter', 'Heebo', sans-serif;
+    }
+
+    /* Smooth card entry animation */
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-step {
+      animation: fadeSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Connector highlight pulse */
+    .gps-highlight {
+      background-color: #FEF08A;
+      color: #854D0E;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      border: 1px solid #FDE047;
+      transition: all 0.25s ease;
+    }
+
+    /* Custom scrollbar for clean mobile look */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex justify-center items-start sm:py-4">
+
+  <!-- Mobile App Container (Max 480px centered) -->
+  <div id="app-shell" class="w-full max-w-[480px] min-h-screen sm:min-h-[820px] bg-cream sm:rounded-3xl sm:border sm:border-cardBorder flex flex-col justify-between relative overflow-hidden">
+
+    <!-- Top Sticky Header + Progress Bar -->
+    <header class="sticky top-0 z-20 bg-cream/95 backdrop-blur-sm border-b border-cardBorder px-5 pt-4 pb-3">
+      <div class="flex items-center justify-between mb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-softBlue text-accentBlue font-bold text-sm border border-blue-200">G</span>
+          <div>
+            <h1 class="text-sm font-bold text-slateInk leading-tight">Module G Reading Coach</h1>
+            <p id="stage-subtitle" class="text-xs text-slateMuted font-hebrew" dir="rtl">שלב 1 מתוך 5 • חימום קצר</p>
+          </div>
+        </div>
+        <div id="score-pill" class="px-3 py-1 rounded-full bg-softMint border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-1">
+          <span>⭐</span>
+          <span id="score-count">0</span>
+        </div>
+      </div>
+
+      <!-- Segmented Progress Bar -->
+      <div class="grid grid-cols-5 gap-1.5" id="progress-segments">
+        <div class="h-1.5 rounded-full bg-accentBlue transition-all duration-300"></div>
+        <div class="h-1.5 rounded-full bg-slate-200 transition-all duration-300"></div>
+        <div class="h-1.5 rounded-full bg-slate-200 transition-all duration-300"></div>
+        <div class="h-1.5 rounded-full bg-slate-200 transition-all duration-300"></div>
+        <div class="h-1.5 rounded-full bg-slate-200 transition-all duration-300"></div>
+      </div>
+    </header>
+
+    <!-- Dynamic Main Content Area -->
+    <main id="stage-container" class="flex-1 px-5 py-5 overflow-y-auto pb-28">
+      <!-- Content injected dynamically by JS -->
+    </main>
+
+    <!-- Sticky Bottom Action Bar (Thumb-friendly) -->
+    <footer id="bottom-bar" class="fixed bottom-0 w-full max-w-[480px] bg-cream/95 backdrop-blur-sm border-t border-cardBorder px-5 py-3.5 z-20 flex items-center gap-3">
+      <button id="btn-prev" onclick="prevStage()" class="hidden px-4 py-3.5 rounded-2xl border border-cardBorder bg-white text-slateInk font-semibold text-sm active:scale-[0.98] transition-transform">
+        ← Back
+      </button>
+      <button id="btn-next" onclick="nextStage()" class="flex-1 py-3.5 px-5 rounded-2xl bg-slateInk text-white font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+        <span id="btn-next-text">Let's Start • בואו נתחיל</span>
+      </button>
+    </footer>
+
+  </div>
+
+  <script>
+    // ==========================================
+    // APP STATE & CURRICULUM DATA
+    // ==========================================
+    const state = {
+      stage: 0, // 0: Warmup, 1: Learn vs Understand, 2: Connector GPS, 3: Mini-Passage Lab, 4: Summary
+      score: 0,
+      icebreakerChoice: null,
+      
+      // Stage 1: Learn vs Understand Drill
+      decoderIndex: 0,
+      decoderAnswers: {}, // { index: { selected, correct } }
+
+      // Stage 2: Connector GPS
+      activeConnectorTab: 'contrast',
+      connectorGameAnswers: {}, // { index: { selected, correct } }
+
+      // Stage 3: Mini-Passage Lab
+      highlightConnectors: false,
+      labAnswers: {}, // { qIndex: selectedOptionIndex }
+      labHintsOpen: {}, // { qIndex: boolean }
+    };
+
+    const STAGE_LABELS = [
+      "שלב 1 מתוך 5 • חימום והיכרות",
+      "שלב 2 מתוך 5 • מפצח השאלות",
+      "שלב 3 מתוך 5 • GPS מילות קישור",
+      "שלב 4 מתוך 5 • מעבדת אנסין חיה",
+      "שלב 5 מתוך 5 • סיכום לכיס"
+    ];
+
+    // Stage 1 Drill Data
+    const DECODER_DRILLS = [
+      {
+        stem: "What do we learn from lines 1–5 about Dr. Cohen's research?",
+        type: "learn",
+        explanationHe: "בול! המילה <strong>learn</strong> אומרת שהתשובה כתובה בטקסט כעובדה ישירה — רק במילים נרדפות (Paraphrasing). לא צריך לנחש, רק לאתר ולהתאים."
+      },
+      {
+        stem: "What can we understand from paragraph 2 about the city's decision?",
+        type: "understand",
+        explanationHe: "מדויק! המילה <strong>understand</strong> (בדיוק כמו <em>infer</em> או <em>imply</em>) היא סימן לשאלת הסקה. התשובה לא כתובה ישירות — צריך לקרוא בין השורות."
+      },
+      {
+        stem: "What is implied in lines 10–14 about teenagers' sleeping habits?",
+        type: "understand",
+        explanationHe: "מצוין! <strong>Implied</strong> (נרמז) שייך למשפחת ה-Understand. הכותב נותן רמזים, ואתם מחברים את הנקודות למסקנה הגיונית."
+      }
+    ];
+
+    // Stage 2 Connector Categories & Mini-Game
+    const CONNECTOR_GROUPS = {
+      contrast: {
+        titleEn: "Contrast • ניגוד",
+        badgeColor: "bg-softRose text-rose-800 border-rose-200",
+        ruleHe: "🚨 תמרור עצור! כשמופיעה מילת ניגוד, הכותב משנה כיוון. ב-80% מהמקרים, התשובה לשאלת בגרות מסתתרת ממש אחרי המילה הזו!",
+        words: [
+          { en: "However / Nevertheless", he: "אולם / אף על פי כן" },
+          { en: "Despite / In spite of", he: "למרות (מגיע לפני שם עצם / ing)" },
+          { en: "Whereas / While", he: "בעוד ש... (משווה בין שני דברים)" },
+          { en: "Unlike", he: "בניגוד ל..." }
+        ]
+      },
+      cause: {
+        titleEn: "Cause & Effect • סיבה ותוצאה",
+        badgeColor: "bg-softBlue text-blue-800 border-blue-200",
+        ruleHe: "🔗 שרשרת הגיון: מילים אלו מחברות בין הסיבה (למה זה קרה?) לתוצאה (מה קרה בעקבות זאת?). שימו לב לא להתבלבל ביניהן בהשלמת משפטים!",
+        words: [
+          { en: "Consequently / Therefore", he: "כתוצאה מכך / לכן" },
+          { en: "As a result", he: "כתוצאה מכך" },
+          { en: "Due to / Owing to", he: "בשל / בגלל (מוביל לסיבה)" },
+          { en: "Lead to / Trigger", he: "להוביל ל... / לגרום ל..." }
+        ]
+      },
+      purpose: {
+        titleEn: "Purpose & Example • מטרה ודוגמה",
+        badgeColor: "bg-softMint text-emerald-800 border-emerald-200",
+        ruleHe: "🎯 למה הכותב הביא דוגמה? התשובה תמיד נמצאת משפט אחד לפני הדוגמה! הדוגמה רק מוכיחה טענה כללית שנאמרה קודם.",
+        words: [
+          { en: "In order to / So as to", he: "על מנת ש... / כדי ל..." },
+          { en: "For instance / For example", he: "לדוגמה (מוכיח את המשפט הקודם)" },
+          { en: "Such as", he: "כגון" }
+        ]
+      }
+    };
+
+    const CONNECTOR_QUIZ = [
+      {
+        sentenceBefore: "Many experts predicted that e-books would completely replace printed books.",
+        sentenceAfter: "sales of physical paperbacks have actually risen among Gen Z readers.",
+        options: ["However,", "Consequently,", "For instance,"],
+        correct: 0,
+        feedbackHe: "נכון! יש כאן ניגוד חד בין התחזית (שספרים מודפסים ייעלמו) למציאות (המכירות עלו). לכן <strong>However</strong> הופך את הכיוון."
+      },
+      {
+        sentenceBefore: "The city installed hundreds of smart traffic sensors.",
+        sentenceAfter: "average commuting times dropped by 22% within six months.",
+        options: ["Despite this,", "As a result,", "Whereas"],
+        correct: 1,
+        feedbackHe: "מעולה! התקנת החיישנים היא הסיבה, וירידת הפקקים היא התוצאה הישירה — לכן <strong>As a result</strong>."
+      },
+      {
+        sentenceBefore: "Urban planners are redesigning rooftops to combat summer heat.",
+        sentenceAfter: "some buildings now feature white reflective coatings and mini-gardens.",
+        options: ["Unlike,", "For instance,", "Due to,"],
+        correct: 1,
+        feedbackHe: "בול! המשפט השני מביא מקרה ספציפי (גגות לבנים וגינות) שממחיש את הטענה הכללית שלפניו — לכן <strong>For instance</strong>."
+      }
+    ];
+
+    // Stage 3 Live Module G Mini-Passage Lab
+    const PASSAGE_LINES = [
+      { num: 1, html: `In recent years, "digital minimalism" has gained momentum among young adults` },
+      { num: 2, html: `seeking relief from constant notifications. <span data-gps="true">While</span> early adopters simply deleted` },
+      { num: 3, html: `social media apps for a weekend, today's movement encourages a permanent` },
+      { num: 4, html: `redesign of how people interact with technology. <span data-gps="true">For instance</span>, many users` },
+      { num: 5, html: `now replace smartphones with basic flip phones during evenings. <span data-gps="true">However</span>,` },
+      { num: 6, html: `psychologists warn that disconnecting entirely can backfire. <span data-gps="true">Due to</span> the fact` },
+      { num: 7, html: `that modern workplaces and social circles rely heavily on instant messaging,` },
+      { num: 8, html: `extreme digital detoxes often trigger anxiety rather than calm. <span data-gps="true">Consequently</span>,` },
+      { num: 9, html: `experts recommend setting realistic screen boundaries instead of total isolation.` }
+    ];
+
+    const LAB_QUESTIONS = [
+      {
+        id: 0,
+        skillBadge: "Skill: Fact-Finding & Paraphrasing • איתור מידע מפורש",
+        skillType: "learn",
+        questionEn: "1. What do we learn from lines 1–4 about today's digital minimalism movement?",
+        hintHe: "רמז: המילה 'learn' אומרת שהתשובה כתובה מפורשות בשורות 1–4. שימו לב לניגוד בין 'early adopters' לבין 'today's movement'.",
+        options: [
+          {
+            text: "It aims to permanently change the way people use technology.",
+            isCorrect: true,
+            feedbackHe: "✅ תשובה נכונה! בטקסט כתוב: 'encourages a permanent redesign of how people interact with technology'. התשובה משתמשת במילים נרדפות (permanently change = permanent redesign)."
+          },
+          {
+            text: "It requires young adults to delete all social media apps forever.",
+            isCorrect: false,
+            feedbackHe: "❌ מלכודת 'הקצנה' (Extreme Trap): הטקסט מזכיר מחיקת אפליקציות לסוף שבוע אצל המאמצים הראשונים (lines 2-3), ולא מחיקה לנצח."
+          },
+          {
+            text: "It was created by psychologists to stop smartphone notifications.",
+            isCorrect: false,
+            feedbackHe: "❌ מלכודת 'ערבוב פרטים': פסיכולוגים מוזכרים רק בהמשך הפסקה (שורה 6) בהקשר אחר לגמרי."
+          }
+        ]
+      },
+      {
+        id: 1,
+        skillBadge: "Skill: Inference (Understanding) • הסקת מסקנות",
+        skillType: "understand",
+        questionEn: "2. What can we understand from lines 5–8 about extreme digital detoxes?",
+        hintHe: "רמז: המילה 'understand' אומרת שזו שאלת הסקה! חפשו את תמרור העצור 'However' בשורה 5 ואת הסיבה 'Due to' בשורה 6.",
+        options: [
+          {
+            text: "They usually help workers become more productive at their jobs.",
+            isCorrect: false,
+            feedbackHe: "❌ הפוך מהטקסט: הטקסט מציין שניתוק מוחלט עלול ליצור השפעה הפוכה (backfire) ולגרום לחרדה."
+          },
+          {
+            text: "They may fail because daily life still demands online availability.",
+            isCorrect: true,
+            feedbackHe: "✅ פיצוח מושלם! הבנתם את ההסקה: מכיוון שמקומות עבודה וחברים תלויים בהודעות מיידיות (Due to...), ניתוק קיצוני יוצר לחץ ונכשל."
+          },
+          {
+            text: "They are more popular than using basic flip phones in the evening.",
+            isCorrect: false,
+            feedbackHe: "❌ מסיח לא קשור: הטקסט לא משווה בין הפופולריות של שני הדברים האלה."
+          }
+        ]
+      },
+      {
+        id: 2,
+        skillBadge: "Skill: Author's Purpose • זיהוי מטרת הדוגמה",
+        skillType: "purpose",
+        questionEn: "3. Why does the writer mention basic flip phones in line 5?",
+        hintHe: "רמז: זוכרים את כלל הזהב? כששואלים למה הכותב הביא דוגמה (For instance), התשובה תמיד נמצאת משפט אחד לפני הדוגמה!",
+        options: [
+          {
+            text: "To prove that old phones are cheaper than modern smartphones.",
+            isCorrect: false,
+            feedbackHe: "❌ ידע חיצוני: מחיר הטלפונים בכלל לא מוזכר בטקסט."
+          },
+          {
+            text: "To warn readers about the dangers of evening screen time.",
+            isCorrect: false,
+            feedbackHe: "❌ לא מדויק: האזהרה של הפסיכולוגים מגיעה רק אחרי המילה 'However', לא בדוגמה הזו."
+          },
+          {
+            text: "To illustrate how people actively reshape their daily tech habits.",
+            isCorrect: true,
+            feedbackHe: "✅ בול! המשפט שלפני הדוגמה (שורות 3-4) מדבר על עיצוב מחדש של האינטראקציה עם טכנולוגיה, והטלפונים הפשוטים הם ההמחשה לכך."
+          }
+        ]
+      }
+    ];
+
+    // ==========================================
+    // RENDERING ENGINE
+    // ==========================================
+    function render() {
+      updateHeaderAndProgress();
+      const container = document.getElementById('stage-container');
+      container.scrollTop = 0;
+
+      if (state.stage === 0) renderWarmup(container);
+      else if (state.stage === 1) renderDecoderStage(container);
+      else if (state.stage === 2) renderConnectorStage(container);
+      else if (state.stage === 3) renderLabStage(container);
+      else if (state.stage === 4) renderSummaryStage(container);
+
+      updateFooterButtons();
+    }
+
+    function updateHeaderAndProgress() {
+      document.getElementById('stage-subtitle').textContent = STAGE_LABELS[state.stage];
+      document.getElementById('score-count').textContent = state.score;
+
+      const segments = document.getElementById('progress-segments').children;
+      for (let i = 0; i < segments.length; i++) {
+        if (i < state.stage) {
+          segments[i].className = "h-1.5 rounded-full bg-accentMint transition-all duration-300";
+        } else if (i === state.stage) {
+          segments[i].className = "h-1.5 rounded-full bg-accentBlue transition-all duration-300";
+        } else {
+          segments[i].className = "h-1.5 rounded-full bg-slate-200 transition-all duration-300";
+        }
+      }
+    }
+
+    function updateFooterButtons() {
+      const prevBtn = document.getElementById('btn-prev');
+      const nextBtn = document.getElementById('btn-next');
+      const nextText = document.getElementById('btn-next-text');
+
+      if (state.stage === 0) {
+        prevBtn.classList.add('hidden');
+        nextText.textContent = "Start Training • מתחילים";
+        nextBtn.className = "flex-1 py-3.5 px-5 rounded-2xl bg-slateInk text-white font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all";
+      } else if (state.stage === 4) {
+        prevBtn.classList.remove('hidden');
+        nextText.textContent = "Practice Again • תרגול חוזר";
+        nextBtn.className = "flex-1 py-3.5 px-5 rounded-2xl bg-accentMint text-white font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all";
+      } else {
+        prevBtn.classList.remove('hidden');
+        nextText.textContent = "Continue • המשך לשלב הבא";
+        nextBtn.className = "flex-1 py-3.5 px-5 rounded-2xl bg-slateInk text-white font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all";
+      }
+    }
+
+    // ------------------------------------------
+    // STAGE 0: WARM-UP & ICE-BREAKER
+    // ------------------------------------------
+    function renderWarmup(container) {
+      const fuels = [
+        { id: 'coffee', emoji: '☕', en: 'Iced Coffee / Espresso', he: 'קפה קר חזק' },
+        { id: 'music', emoji: '🎧', en: 'Lo-Fi Beats / Playlist', he: 'מוזיקה באוזניות' },
+        { id: 'snacks', emoji: '🍫', en: 'Chocolate & Snacks', he: 'משהו מתוק ליד' },
+        { id: 'panic', emoji: '⚡', en: 'Pure Last-Minute Adrenaline', he: 'אדרנלין של הרגע האחרון' }
+      ];
+
+      container.innerHTML = `
+        <div class="animate-step space-y-5">
+          <!-- Hero Welcome Card -->
+          <div class="bg-softBlue border border-blue-200 rounded-3xl p-5">
+            <div class="inline-block px-3 py-1 rounded-full bg-white text-accentBlue text-xs font-bold mb-3 border border-blue-100">
+              Bagrut 5 Units • Module G
+            </div>
+            <h2 class="text-2xl font-extrabold text-slateInk mb-2 leading-snug">
+              Crack the Module G Unseen.
+            </h2>
+            <p class="font-hebrew text-slateInk/90 text-base leading-relaxed" dir="rtl">
+              היי! 👋 שאלון G הוא לא מבחן באוצר מילים — הוא <strong>מבחן בפיצוח רמזים</strong>. ב-5 דקות הקרובות נלמד את 3 הטריקים שיעזרו לכם לזהות בדיוק מה בודקים בכל שאלה ולעקוף מלכודות.
+            </p>
+          </div>
+
+          <!-- Ice Breaker Poll -->
+          <div class="bg-white border border-cardBorder rounded-3xl p-5">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold uppercase tracking-wider text-accentMint">Quick Warm-Up</span>
+              <span class="text-xs text-slateMuted font-hebrew" dir="rtl">שאלת חימום קלילה</span>
+            </div>
+            <h3 class="text-lg font-bold text-slateInk mb-1">What's your ultimate study fuel?</h3>
+            <p class="text-sm text-slateMuted font-hebrew mb-4" dir="rtl">מה הדלק שלכם כשמתכוננים לבגרות?</p>
+
+            <div class="space-y-2.5">
+              ${fuels.map(f => {
+                const isSelected = state.icebreakerChoice === f.id;
+                return `
+                  <button onclick="selectFuel('${f.id}')" class="w-full text-left p-3.5 rounded-2xl border transition-all flex items-center justify-between ${isSelected ? 'bg-softMint border-accentMint ring-1 ring-accentMint' : 'bg-cream/60 border-cardBorder hover:bg-slate-50'}">
+                    <div class="flex items-center gap-3">
+                      <span class="text-2xl">${f.emoji}</span>
+                      <div>
+                        <div class="font-semibold text-sm text-slateInk">${f.en}</div>
+                        <div class="text-xs text-slateMuted font-hebrew" dir="rtl">${f.he}</div>
+                      </div>
+                    </div>
+                    <span class="w-5 h-5 rounded-full border flex items-center justify-center text-xs ${isSelected ? 'bg-accentMint border-accentMint text-white' : 'border-slate-300'}">
+                      ${isSelected ? '✓' : ''}
+                    </span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+
+            ${state.icebreakerChoice ? `
+              <div class="mt-4 p-3 rounded-2xl bg-softAmber border border-amber-200 text-amber-900 text-sm font-hebrew" dir="rtl">
+                מעולה! המוח מחומם ומוכן. לחצו למטה כדי לגלות את ההבדל הכי קריטי בשאלון G 👇
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function selectFuel(id) {
+      if (!state.icebreakerChoice) {
+        state.score += 10;
+      }
+      state.icebreakerChoice = id;
+      render();
+    }
+
+    // ------------------------------------------
+    // STAGE 1: "LEARN" VS "UNDERSTAND" DECODER
+    // ------------------------------------------
+    function renderDecoderStage(container) {
+      const currentDrill = DECODER_DRILLS[state.decoderIndex];
+      const userAttempt = state.decoderAnswers[state.decoderIndex];
+
+      container.innerHTML = `
+        <div class="animate-step space-y-5">
+          <!-- Concept Header -->
+          <div>
+            <span class="inline-block px-3 py-1 rounded-full bg-softBlue text-accentBlue text-xs font-bold mb-2">
+              Rule #1 • ניסוח השאלה
+            </span>
+            <h2 class="text-xl font-extrabold text-slateInk">
+              "Learn" vs. "Understand"
+            </h2>
+            <p class="text-sm text-slateMuted font-hebrew mt-1" dir="rtl">
+              מילה אחת בניסוח השאלה משנה את כל שיטת החיפוש שלכם בטקסט:
+            </p>
+          </div>
+
+          <!-- Comparison Side-by-Side Cards -->
+          <div class="grid grid-cols-1 gap-3">
+            <!-- LEARN Card -->
+            <div class="bg-softMint/70 border border-emerald-200 rounded-2xl p-4">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-extrabold text-emerald-900 text-base">🔍 "What do we LEARN?"</span>
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white text-emerald-800 border border-emerald-200 font-hebrew">מידע ישיר</span>
+              </div>
+              <p class="text-sm text-slateInk font-hebrew leading-relaxed" dir="rtl">
+                התשובה <strong>כתובה מפורשות בטקסט</strong>, רק במילים נרדפות (Paraphrasing). אל תנחשו — פשוט תאתרו את המשפט ותתאימו משמעות.
+              </p>
+            </div>
+
+            <!-- UNDERSTAND Card -->
+            <div class="bg-softAmber/80 border border-amber-200 rounded-2xl p-4">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-extrabold text-amber-950 text-base">🧠 "What do we UNDERSTAND?"</span>
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white text-amber-900 border border-amber-200 font-hebrew">הסקה (Inference)</span>
+              </div>
+              <p class="text-sm text-slateInk font-hebrew leading-relaxed" dir="rtl">
+                התשובה <strong>לא כתובה ישירות</strong>! גם מילים כמו <em>Infer / Imply / Suggest</em> אומרות: חברו שני רמזים יחד וקראו בין השורות.
+              </p>
+            </div>
+          </div>
+
+          <!-- Interactive Mini-Drill -->
+          <div class="bg-white border border-cardBorder rounded-3xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-accentBlue uppercase tracking-wider">Quick Drill • זיהוי מהיר</span>
+              <div class="flex gap-1">
+                ${DECODER_DRILLS.map((_, idx) => `
+                  <button onclick="setDecoderIndex(${idx})" class="w-6 h-6 rounded-full text-xs font-bold ${idx === state.decoderIndex ? 'bg-slateInk text-white' : state.decoderAnswers[idx] ? 'bg-softMint text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slateMuted'}">
+                    ${idx + 1}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <p class="text-xs text-slateMuted font-hebrew mb-2" dir="rtl">קראו את פתיח השאלה מהבגרות — איזו מיומנות נדרשת?</p>
+
+            <!-- Bagrut Question Stem Box -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-4" dir="ltr">
+              <p class="font-semibold text-slateInk text-base leading-snug">
+                "${currentDrill.stem}"
+              </p>
+            </div>
+
+            <!-- Two Big Tap Buttons -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <button onclick="answerDecoder('learn')" class="p-3.5 rounded-2xl border text-center transition-all active:scale-[0.97] ${
+                userAttempt?.selected === 'learn'
+                  ? (currentDrill.type === 'learn' ? 'bg-softMint border-accentMint text-emerald-950 font-bold' : 'bg-softRose border-accentRose text-rose-950 font-bold')
+                  : 'bg-white border-cardBorder hover:bg-slate-50 text-slateInk font-semibold'
+              }">
+                <div class="text-sm">🔍 Direct Fact</div>
+                <div class="text-xs text-slateMuted font-hebrew mt-0.5">מידע ישיר (Learn)</div>
+              </button>
+
+              <button onclick="answerDecoder('understand')" class="p-3.5 rounded-2xl border text-center transition-all active:scale-[0.97] ${
+                userAttempt?.selected === 'understand'
+                  ? (currentDrill.type === 'understand' ? 'bg-softMint border-accentMint text-emerald-950 font-bold' : 'bg-softRose border-accentRose text-rose-950 font-bold')
+                  : 'bg-white border-cardBorder hover:bg-slate-50 text-slateInk font-semibold'
+              }">
+                <div class="text-sm">🧠 Inference</div>
+                <div class="text-xs text-slateMuted font-hebrew mt-0.5">הסקה (Understand)</div>
+              </button>
+            </div>
+
+            <!-- Instant Hebrew Feedback -->
+            ${userAttempt ? `
+              <div class="mt-4 p-3.5 rounded-2xl border text-sm font-hebrew leading-relaxed ${userAttempt.correct ? 'bg-softMint border-emerald-200 text-emerald-950' : 'bg-softRose border-rose-200 text-rose-950'}" dir="rtl">
+                <div class="font-bold mb-1">${userAttempt.correct ? '🎉 מעולה!' : '💡 כמעט! שימו לב למילת המפתח:'}</div>
+                <div>${currentDrill.explanationHe}</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function setDecoderIndex(idx) {
+      state.decoderIndex = idx;
+      render();
+    }
+
+    function answerDecoder(choice) {
+      const drill = DECODER_DRILLS[state.decoderIndex];
+      const isCorrect = choice === drill.type;
+      if (!state.decoderAnswers[state.decoderIndex] && isCorrect) {
+        state.score += 15;
+      }
+      state.decoderAnswers[state.decoderIndex] = { selected: choice, correct: isCorrect };
+      render();
+    }
+
+    // ------------------------------------------
+    // STAGE 2: CONNECTOR GPS
+    // ------------------------------------------
+    function renderConnectorStage(container) {
+      const group = CONNECTOR_GROUPS[state.activeConnectorTab];
+
+      container.innerHTML = `
+        <div class="animate-step space-y-5">
+          <div>
+            <span class="inline-block px-3 py-1 rounded-full bg-softMint text-emerald-800 text-xs font-bold mb-2">
+              Rule #2 • ה-GPS של הטקסט
+            </span>
+            <h2 class="text-xl font-extrabold text-slateInk">
+              Connector GPS
+            </h2>
+            <p class="text-sm text-slateMuted font-hebrew mt-1" dir="rtl">
+              מילות קישור הן תמרורים שמראים לאן הכותב לוקח את הרעיון. לחצו על כל קטגוריה:
+            </p>
+          </div>
+
+          <!-- Category Tabs -->
+          <div class="grid grid-cols-3 gap-1.5 bg-slate-200/70 p-1 rounded-2xl">
+            <button onclick="setConnectorTab('contrast')" class="py-2 px-2 rounded-xl text-xs font-bold transition-all ${state.activeConnectorTab === 'contrast' ? 'bg-white text-slateInk' : 'text-slateMuted'}">
+              🛑 Contrast
+            </button>
+            <button onclick="setConnectorTab('cause')" class="py-2 px-2 rounded-xl text-xs font-bold transition-all ${state.activeConnectorTab === 'cause' ? 'bg-white text-slateInk' : 'text-slateMuted'}">
+              🔗 Cause/Effect
+            </button>
+            <button onclick="setConnectorTab('purpose')" class="py-2 px-2 rounded-xl text-xs font-bold transition-all ${state.activeConnectorTab === 'purpose' ? 'bg-white text-slateInk' : 'text-slateMuted'}">
+              🎯 Purpose
+            </button>
+          </div>
+
+          <!-- Active Connector Card -->
+          <div class="bg-white border border-cardBorder rounded-3xl p-4 space-y-3">
+            <div class="inline-block px-3 py-1 rounded-full text-xs font-bold border ${group.badgeColor}">
+              ${group.titleEn}
+            </div>
+            
+            <p class="text-sm text-slateInk font-hebrew bg-cream p-3 rounded-2xl border border-cardBorder leading-relaxed" dir="rtl">
+              ${group.ruleHe}
+            </p>
+
+            <div class="divide-y divide-slate-100">
+              ${group.words.map(w => `
+                <div class="py-2.5 flex items-center justify-between gap-2">
+                  <span class="font-bold text-sm text-slateInk" dir="ltr">${w.en}</span>
+                  <span class="text-xs text-slateMuted font-hebrew text-right" dir="rtl">${w.he}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Interactive Mini-Game: Complete the Sentence -->
+          <div class="bg-white border border-cardBorder rounded-3xl p-5 space-y-4">
+            <div>
+              <span class="text-xs font-bold text-accentBlue uppercase tracking-wider">Tap to Complete • אתגר ה-GPS</span>
+              <p class="text-xs text-slateMuted font-hebrew mt-0.5" dir="rtl">בחרו את מילת הקישור שמתאימה להיגיון של המשפט:</p>
+            </div>
+
+            ${CONNECTOR_QUIZ.map((q, qIdx) => {
+              const attempt = state.connectorGameAnswers[qIdx];
+              return `
+                <div class="p-4 rounded-2xl bg-cream/80 border border-cardBorder space-y-3">
+                  <p class="text-sm text-slateInk leading-relaxed" dir="ltr">
+                    <span class="font-medium">${q.sentenceBefore}</span>
+                    <span class="inline-block px-2 py-0.5 mx-1 rounded bg-softBlue text-accentBlue font-bold border border-blue-200">
+                      ${attempt ? q.options[attempt.selected] : '______'}
+                    </span>
+                    <span class="font-medium">${q.sentenceAfter}</span>
+                  </p>
+
+                  <div class="flex flex-wrap gap-2" dir="ltr">
+                    ${q.options.map((opt, optIdx) => {
+                      let btnStyle = "bg-white border-cardBorder text-slateInk hover:bg-slate-50";
+                      if (attempt) {
+                        if (optIdx === q.correct) btnStyle = "bg-softMint border-accentMint text-emerald-950 font-bold";
+                        else if (optIdx === attempt.selected) btnStyle = "bg-softRose border-accentRose text-rose-950";
+                        else btnStyle = "bg-white/50 border-slate-200 text-slateMuted";
+                      }
+                      return `
+                        <button onclick="answerConnectorQuiz(${qIdx}, ${optIdx})" class="px-3 py-2 rounded-xl border text-xs font-semibold transition-all active:scale-95 ${btnStyle}">
+                          ${opt}
+                        </button>
+                      `;
+                    }).join('')}
+                  </div>
+
+                  ${attempt ? `
+                    <div class="text-xs font-hebrew p-2.5 rounded-xl ${attempt.correct ? 'bg-softMint/70 text-emerald-950' : 'bg-softRose/70 text-rose-950'}" dir="rtl">
+                      ${attempt.correct ? q.feedbackHe : '❌ נסו שוב! בדקו אם יש כאן ניגוד, תוצאה או דוגמה.'}
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setConnectorTab(tab) {
+      state.activeConnectorTab = tab;
+      render();
+    }
+
+    function answerConnectorQuiz(qIdx, optIdx) {
+      const q = CONNECTOR_QUIZ[qIdx];
+      const isCorrect = optIdx === q.correct;
+      if ((!state.connectorGameAnswers[qIdx] || !state.connectorGameAnswers[qIdx].correct) && isCorrect) {
+        state.score += 15;
+      }
+      state.connectorGameAnswers[qIdx] = { selected: optIdx, correct: isCorrect };
+      render();
+    }
+
+    // ------------------------------------------
+    // STAGE 3: LIVE MODULE G MINI-PASSAGE LAB
+    // ------------------------------------------
+    function renderLabStage(container) {
+      container.innerHTML = `
+        <div class="animate-step space-y-5">
+          <div>
+            <span class="inline-block px-3 py-1 rounded-full bg-softAmber text-amber-900 text-xs font-bold mb-2">
+              Live Practice • מעבדת אנסין
+            </span>
+            <h2 class="text-xl font-extrabold text-slateInk">
+              Module G Mini-Passage Lab
+            </h2>
+            <p class="text-sm text-slateMuted font-hebrew mt-1" dir="rtl">
+              קראו את הפסקה הקצרה וענו על 3 שאלות ברמת בגרות. השתמשו בכפתור ה-GPS כדי להאיר מילות קישור!
+            </p>
+          </div>
+
+          <!-- Reading Passage Card -->
+          <div class="bg-white border border-cardBorder rounded-3xl p-4 sm:p-5">
+            <div class="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
+              <span class="text-xs font-bold uppercase tracking-wider text-slateMuted">Digital Minimalism</span>
+              <button onclick="toggleGpsHighlight()" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 active:scale-95 ${
+                state.highlightConnectors
+                  ? 'bg-yellow-200 border-yellow-400 text-yellow-950'
+                  : 'bg-softBlue border-blue-200 text-accentBlue'
+              }">
+                <span>🧭</span>
+                <span>${state.highlightConnectors ? 'GPS Highlight: ON' : 'Spot GPS Connectors'}</span>
+              </button>
+            </div>
+
+            <!-- Numbered Passage Lines -->
+            <div class="space-y-1.5 text-[14.5px] leading-relaxed text-slateInk font-english" dir="ltr">
+              ${PASSAGE_LINES.map(line => {
+                let processedHtml = line.html;
+                if (state.highlightConnectors) {
+                  processedHtml = processedHtml.replace(/<span data-gps="true">(.*?)<\/span>/g, '<span class="gps-highlight">$1</span>');
+                }
+                return `
+                  <div class="flex items-start gap-2.5">
+                    <span class="w-4 text-right text-[11px] font-mono text-slateMuted select-none pt-1">${line.num}</span>
+                    <p class="flex-1 m-0">${processedHtml}</p>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- 3 Progressive Bagrut Questions -->
+          <div class="space-y-4">
+            ${LAB_QUESTIONS.map((q, qIdx) => {
+              const selectedOptIdx = state.labAnswers[qIdx];
+              const hasAnswered = selectedOptIdx !== undefined;
+              const hintOpen = !!state.labHintsOpen[qIdx];
+
+              return `
+                <div class="bg-white border border-cardBorder rounded-3xl p-5 space-y-3.5">
+                  <!-- Skill Badge + Hint Button -->
+                  <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <span class="px-2.5 py-1 rounded-lg bg-softBlue text-accentBlue text-[11px] font-bold border border-blue-100">
+                      ${q.skillBadge}
+                    </span>
+                    <button onclick="toggleLabHint(${qIdx})" class="px-2.5 py-1 rounded-lg bg-softAmber text-amber-900 text-xs font-hebrew font-semibold border border-amber-200 active:scale-95">
+                      ${hintOpen ? 'הסתר רמז' : '💡 רמז'}
+                    </button>
+                  </div>
+
+                  <!-- Optional Hebrew Hint -->
+                  ${hintOpen ? `
+                    <div class="p-3 rounded-2xl bg-softAmber/70 border border-amber-200 text-xs text-amber-950 font-hebrew leading-relaxed" dir="rtl">
+                      ${q.hintHe}
+                    </div>
+                  ` : ''}
+
+                  <!-- Question Text -->
+                  <h3 class="font-bold text-base text-slateInk leading-snug" dir="ltr">
+                    ${q.questionEn}
+                  </h3>
+
+                  <!-- Options List -->
+                  <div class="space-y-2.5" dir="ltr">
+                    ${q.options.map((opt, optIdx) => {
+                      const isThisSelected = selectedOptIdx === optIdx;
+                      let cardClass = "bg-cream/60 border-cardBorder text-slateInk hover:bg-slate-50";
+                      
+                      if (hasAnswered) {
+                        if (opt.isCorrect) {
+                          cardClass = "bg-softMint border-accentMint text-emerald-950 ring-1 ring-accentMint";
+                        } else if (isThisSelected && !opt.isCorrect) {
+                          cardClass = "bg-softRose border-accentRose text-rose-950";
+                        } else {
+                          cardClass = "bg-slate-50/70 border-slate-200 text-slateMuted";
+                        }
+                      }
+
+                      return `
+                        <div class="space-y-1.5">
+                          <button onclick="answerLabQuestion(${qIdx}, ${optIdx})" class="w-full text-left p-3.5 rounded-2xl border text-sm font-medium transition-all active:scale-[0.99] flex items-start gap-2.5 ${cardClass}">
+                            <span class="font-bold text-xs mt-0.5">${['A.', 'B.', 'C.'][optIdx]}</span>
+                            <span class="flex-1">${opt.text}</span>
+                          </button>
+
+                          <!-- Show detailed distractor/correct explanation once answered -->
+                          ${hasAnswered && (isThisSelected || opt.isCorrect) ? `
+                            <div class="mx-1 p-3 rounded-xl text-xs font-hebrew leading-relaxed ${opt.isCorrect ? 'bg-emerald-50 text-emerald-950 border border-emerald-200' : 'bg-rose-50 text-rose-950 border border-rose-200'}" dir="rtl">
+                              ${opt.feedbackHe}
+                            </div>
+                          ` : ''}
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleGpsHighlight() {
+      state.highlightConnectors = !state.highlightConnectors;
+      render();
+    }
+
+    function toggleLabHint(qIdx) {
+      state.labHintsOpen[qIdx] = !state.labHintsOpen[qIdx];
+      render();
+    }
+
+    function answerLabQuestion(qIdx, optIdx) {
+      const q = LAB_QUESTIONS[qIdx];
+      const alreadyCorrect = state.labAnswers[qIdx] !== undefined && q.options[state.labAnswers[qIdx]].isCorrect;
+      if (!alreadyCorrect && q.options[optIdx].isCorrect) {
+        state.score += 20;
+      }
+      state.labAnswers[qIdx] = optIdx;
+      render();
+    }
+
+    // ------------------------------------------
+    // STAGE 4: COMPLETION SUMMARY & CHEAT SHEET
+    // ------------------------------------------
+    function renderSummaryStage(container) {
+      container.innerHTML = `
+        <div class="animate-step space-y-5">
+          <!-- Unlocked Badge Card -->
+          <div class="bg-gradient-to-br from-softBlue via-white to-softMint border border-blue-200 rounded-3xl p-6 text-center">
+            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-white border border-emerald-200 flex items-center justify-center text-3xl">
+              🏆
+            </div>
+            <div class="inline-block px-3 py-1 rounded-full bg-softMint text-emerald-800 text-xs font-bold mb-2 border border-emerald-200">
+              Badge Unlocked: Module G Decoder
+            </div>
+            <h2 class="text-2xl font-extrabold text-slateInk">כל הכבוד! סיימתם את האימון</h2>
+            <p class="text-sm text-slateMuted font-hebrew mt-1" dir="rtl">
+              צברתם <strong class="text-slateInk">${state.score} נקודות</strong> של מיומנויות קריאה לבגרות.
+            </p>
+          </div>
+
+          <!-- Pocket Cheat Sheet (Screenshot Friendly) -->
+          <div class="bg-white border-2 border-slateInk rounded-3xl p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="font-extrabold text-base text-slateInk">📲 Pocket Exam Cheat Sheet</h3>
+                <p class="text-xs text-slateMuted font-hebrew" dir="rtl">צלמו מסך ושמרו לבוקר של הבגרות!</p>
+              </div>
+              <span class="text-xl">📸</span>
+            </div>
+
+            <div class="space-y-3.5 text-sm" dir="rtl">
+              <!-- Bullet 1 -->
+              <div class="p-3.5 rounded-2xl bg-softMint/60 border border-emerald-200 font-hebrew">
+                <div class="font-bold text-emerald-950 mb-1">1. Learn מול Understand</div>
+                <p class="text-slateInk/90 text-xs leading-relaxed">
+                  • <strong dir="ltr">Learn</strong> = מידע ישיר בטקסט (חפשו מילים נרדפות).<br>
+                  • <strong dir="ltr">Understand / Infer / Imply</strong> = הסקה בין השורות.
+                </p>
+              </div>
+
+              <!-- Bullet 2 -->
+              <div class="p-3.5 rounded-2xl bg-softRose/60 border border-rose-200 font-hebrew">
+                <div class="font-bold text-rose-950 mb-1">2. תמרורי עצור (Contrast)</div>
+                <p class="text-slateInk/90 text-xs leading-relaxed">
+                  ראיתם <strong dir="ltr">However / Despite / Whereas</strong>? עצרו! התשובה לשאלה כמעט תמיד מסתתרת מיד אחרי מילת הניגוד.
+                </p>
+              </div>
+
+              <!-- Bullet 3 -->
+              <div class="p-3.5 rounded-2xl bg-softAmber/70 border border-amber-200 font-hebrew">
+                <div class="font-bold text-amber-950 mb-1">3. כלל הדוגמה ומלכודות</div>
+                <p class="text-slateInk/90 text-xs leading-relaxed">
+                  • שאלו למה יש דוגמה (<strong dir="ltr">For instance</strong>)? התשובה <strong>משפט אחד לפני</strong>.<br>
+                  • היזהרו ממסיחי "העתק-הדבק" ומילים קיצוניות (<strong dir="ltr">always, never, completely</strong>).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ------------------------------------------
+    // NAVIGATION CONTROLS
+    // ------------------------------------------
+    function nextStage() {
+      if (state.stage < 4) {
+        state.stage++;
+        render();
+      } else {
+        // Reset for replay
+        state.stage = 0;
+        state.decoderIndex = 0;
+        state.decoderAnswers = {};
+        state.connectorGameAnswers = {};
+        state.labAnswers = {};
+        state.labHintsOpen = {};
+        state.highlightConnectors = false;
+        render();
+      }
+    }
+
+    function prevStage() {
+      if (state.stage > 0) {
+        state.stage--;
+        render();
+      }
+    }
+
+    // Initial boot
+    window.onload = function() {
+      render();
+    };
+  </script>
+</body>
+</html>
